@@ -8,14 +8,14 @@ import matplotlib.pyplot as plt
 from tkinter import Tk, Label, Button, OptionMenu, StringVar, Frame, Text, Scrollbar, END
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-# Função para monitorar processos e gerar o arquivo trace.txt
-def gui(): # Função principal para a interface gráfica
+
+def gui(): 
     
-     # Criar a interface com Tkinter
+    # interface principal
     root = Tk()
     root.title("Analisador de Processos por CPU")
 
-    # Configurações iniciais de cores
+
     global dark_mode, annotation, is_dragging, x_press, y_press
 
     dark_mode = True
@@ -35,27 +35,27 @@ def gui(): # Função principal para a interface gráfica
     
     
     
-    # Variável de seleção da CPU
+    # setando a variável da CPU
     cpu_var = StringVar(root)
     cpu_var.set('0')
     global data
     data = pd.DataFrame(columns=['Processo', 'CPU', 'Acordado', 'Execução', 'Término'])
     data['CPU'] = data['CPU'].astype(str)
     data = data._append({'Processo': '', 'CPU': 0, 'Acordado': 0, 'Execução': 0, 'Término': 0}, ignore_index=True)
-    # Obter as CPUs únicas no arquivo
+    
  
 
-    # Label e dropdown para selecionar a CPU
+    # dropdown da CPU
     label = Label(root, text="Selecione a CPU:", bg=bg_color_dark, fg=label_color_dark)
     label.grid(row=0, column=0, sticky='w')
 
 
 
-    # Botão para iniciar o monitoramento
+    # botão para monitorar processos
     monitor_button = Button(root, text="Iniciar Monitoramento Novamente", command=lambda: [monitor_processes(), load_data(), plot_graph()], bg=button_bg_dark, fg=button_fg_dark)
     monitor_button.grid(row=1, column=0, sticky='w')
 
-    # Botão para gerar o gráfico, inicialmente desabilitado
+    # botão para plotar o gráfico
     plot_button = Button(root, text="Gerar Gráfico", command=lambda: plot_graph(cpu_var.get()), state="active", bg=button_bg_dark, fg=button_fg_dark)
     plot_button.grid(row=1, column=1, sticky='w')
 
@@ -92,7 +92,7 @@ def gui(): # Função principal para a interface gráfica
             dark_mode = True
             toggle_button.config(text="Desativar Modo Noturno")
 
-    # Adicionar glossário como um Label abaixo do gráfico
+    # Legenda
     glossary_label = Label(root, text=(
         "Legenda: Acordado (bolas azuis), Execução (Xs laranjas), "
         "Término (quadrados verdes)\nZoom: Scroll do mouse. "
@@ -100,27 +100,27 @@ def gui(): # Função principal para a interface gráfica
     ), bg=bg_color_dark, fg=label_color_dark)
     glossary_label.grid(row=4, column=0, columnspan=3, sticky='n')
 
-    # Ajustar proporções das colunas e linhas
+    # Configurações de layout
     root.grid_rowconfigure(2, weight=1)
     root.grid_columnconfigure(1, weight=1)
-    # Botão para alternar entre modos
+    # botão para alternar entre os modos claro e escuro
     toggle_button = Button(root, text="Desativar Modo Noturno", command=toggle_mode, bg=button_bg_dark, fg=button_fg_dark)
     toggle_button.grid(row=0, column=2, sticky='ne')  # Posicionando no canto superior direito
 
-    # Frame para segurar o canvas (gráfico)
+    # frame do gráfico
     frame = Frame(root, bg=bg_color_dark)
     frame.grid(row=2, column=0, columnspan=3, sticky='nsew')
 
-    # Frame para o Text widget e scrollbar
+    # frame do scroll e do texto
     output_frame = Frame(root, bg=bg_color_dark)
     output_frame.grid(row=3, column=0, columnspan=3, sticky='nsew')
 
-    # Scrollbar para o Text widget
+    # scrollbar
     scrollbar = Scrollbar(output_frame)
     scrollbar.pack(side='right', fill='y')
     
     
-    # Widget de texto para saídas do terminal
+    # saida de texto
     output_text = Text(output_frame, wrap='word', bg=entry_bg_dark, fg=label_color_dark, yscrollcommand=scrollbar.set)
     output_text.pack(fill='both', expand=True)
     scrollbar.config(command=output_text.yview)
@@ -139,7 +139,7 @@ def gui(): # Função principal para a interface gráfica
                 stderr=subprocess.PIPE
             )
 
-            # Espera 3 segundos para coletar dados de monitoramento
+            # tempo do monitoramento
             time.sleep(3)
 
             os.kill(process.pid, signal.SIGINT)
@@ -156,7 +156,7 @@ def gui(): # Função principal para a interface gráfica
             log_message(f"Ocorreu um erro: {e}")
             return False  # Retorna False em caso de erro
 
-    # Função para converter trace.dat para trace.txt
+    # converter trace.dat para trace.txt
     def convert_trace_file(input_file, output_file):
         log_message("Convertendo trace.dat para trace.txt...")
         with open(output_file, "w") as txt_file:
@@ -173,11 +173,11 @@ def gui(): # Função principal para a interface gráfica
         else:
             log_message("Erro durante a conversão: trace.txt não foi gerado.")
 
-    # Função para analisar o arquivo trace.txt e gerar process_times.txt
+    # converter trace.txt para process_times.txt
     def parse_trace_file(input_file, output_file):
         process_data = {}
-        wakeup_pattern = re.compile(r'\s+(\S+.?)\s+\[\d+\]\s+(\d+\.\d+): sched_wakeup:\s+(\S+.?)\s+\[\d+\]\s+CPU:(\S+)')
-        switch_pattern = re.compile(r'\s+(\S+.?)\s+\[\d+\]\s+(\d+\.\d+): sched_switch:\s+(\S+.?)\s+\[\d+\]\s+(\S)\s+==>\s+(\S+.*?)\s+\[\d+\]')
+        wakeup_pattern = re.compile(r'\s+(\S+.*?)\s+\[(\d+)\]\s+(\d+\.\d+): sched_wakeup:\s+(\S+.*?)\s+\[\d+\]\s+CPU:(\S+)')
+        switch_pattern = re.compile(r'\s+(\S+.*?)\s+\[(\d+)\]\s+(\d+\.\d+): sched_switch:\s+(\S+.*?)\s+\[\d+\]\s+(\S)\s+==>\s+(\S+.*?)\s+\[\d+\]')
         
         wakeup_count = 0
         switch_count = 0
@@ -189,10 +189,9 @@ def gui(): # Função principal para a interface gráfica
 
                 if wakeup_match:
                     wakeup_count += 1
-                    current_process = wakeup_match.group(1)
-                    timestamp = float(wakeup_match.group(2))
-                    target_process = wakeup_match.group(3)
-                    cpu = wakeup_match.group(4)
+                    timestamp = float(wakeup_match.group(3))
+                    target_process = wakeup_match.group(4)
+                    cpu = wakeup_match.group(2)
                     key = target_process
 
                     if key not in process_data:
@@ -201,10 +200,10 @@ def gui(): # Função principal para a interface gráfica
 
                 elif switch_match:
                     switch_count += 1
-                    current_process = switch_match.group(1)
-                    old_process_name = switch_match.group(3)
-                    new_process_name = switch_match.group(5)
-                    timestamp = float(switch_match.group(2))
+                    cpu = switch_match.group(2)
+                    old_process_name = switch_match.group(4)
+                    new_process_name = switch_match.group(6)
+                    timestamp = float(switch_match.group(3))
 
                     key_new = new_process_name
                     if key_new in process_data:
@@ -212,6 +211,10 @@ def gui(): # Função principal para a interface gráfica
                             if instance['start_time'] is None and instance['wakeup_time'] is not None:
                                 instance['start_time'] = timestamp
                                 break
+                    
+                    else:
+                        process_data[key_new] = []
+                        process_data[key_new].append({'CPU': cpu, 'wakeup_time': None, 'start_time': timestamp, 'end_time': None})
 
                     key_old = old_process_name
                     if key_old in process_data:
@@ -219,6 +222,10 @@ def gui(): # Função principal para a interface gráfica
                             if instance['start_time'] is not None and instance['end_time'] is None:
                                 instance['end_time'] = timestamp
                                 break
+                    
+                    else:
+                        process_data[key_old] = []
+                        process_data[key_old].append({'CPU': cpu, 'wakeup_time': None, 'start_time': None, 'end_time': timestamp})
 
         log_message(f"[DEBUG] Total de eventos sched_wakeup: {wakeup_count}")
         log_message(f"[DEBUG] Total de eventos sched_switch: {switch_count}")
@@ -229,8 +236,7 @@ def gui(): # Função principal para a interface gráfica
                 for instance in instances:
                     out_f.write(f"{key}\t{instance['CPU']}\t{instance['wakeup_time']}\t{instance['start_time']}\t{instance['end_time']}\n")
 
-    # Função para plotar o gráfico filtrando pela CPU selecionada
-    def plot_graph(cpu):
+    def plot_graph(cpu):    # Função para plotar o gráfico filtrando pela CPU selecionada
         global is_dragging, x_press, y_press, annotation
         cpu_data = data[data['CPU'].astype(str) == str(cpu)]
 
@@ -265,7 +271,7 @@ def gui(): # Função principal para a interface gráfica
         ax.set_title(f'Processos na CPU {cpu}: Acordado, Execução e Término')
         ax.grid(True)
 
-        # Funções de interação do gráfico
+        
         def zoom(event):
             base_scale = 1.2
             cur_xlim = ax.get_xlim()
@@ -327,7 +333,7 @@ def gui(): # Função principal para a interface gráfica
                 dx = abs(event.xdata - x)
                 dy = abs(ax.get_ybound()[1] - ax.get_ybound()[0]) / len(processos)
                 if dx < hover_distance_threshold and dy < hover_distance_threshold:
-                    distance = (dx**2 + dy**2)**0.5
+                    distance = (dx*2 + dy*2)*0.5
                     if distance < min_distance:
                         min_distance = distance
                         closest_point = (x, proc, tipo, tempo_adicional)
@@ -336,15 +342,22 @@ def gui(): # Função principal para a interface gráfica
                 x, proc, tipo, tempo_adicional = closest_point
                 if annotation:
                     annotation.remove()
-
                 if tipo == 'Término':
-                    annotation_text = (f"Processo: {proc}\nInstante relativo: {x:.6f}s\n"
-                                    f"Fase: {tipo}\nTempo de Execução: {tempo_adicional:.6f}s")
+                    if pd.isna(tempo_adicional):
+                        annotation_text = (f"Processo: {proc}\nInstante relativo: {x:.6f}s\n"
+                                           f"Fase: {tipo}\nTempo de Execução: Sem dados suficientes")
+                    else:
+                        annotation_text = (f"Processo: {proc}\nInstante relativo: {x:.6f}s\n"
+                                           f"Fase: {tipo}\nTempo de Execução: {tempo_adicional:.6f}s")
                 elif tipo == 'Execução':
-                    annotation_text = (f"Processo: {proc}\nInstante relativo: {x:.6f}s\n"
-                                    f"Fase: {tipo}\nTempo na Fila: {tempo_adicional:.6f}s")
+                    if pd.isna(tempo_adicional):
+                        annotation_text = (f"Processo: {proc}\nInstante relativo: {x:.6f}s\n"
+                                           f"Fase: {tipo}\nTempo na Fila: Sem dados suficientes")
+                    else:
+                        annotation_text = (f"Processo: {proc}\nInstante relativo: {x:.6f}s\n"
+                                            f"Fase: {tipo}\nTempo na Fila: {tempo_adicional:.6f}s")
                 else:
-                    annotation_text = f"Processo: {proc}\nInstante relativo: {x:.6f}s\nFase: {tipo}"
+                      annotation_text = f"Processo: {proc}\nInstante relativo: {x:.6f}s\nFase: {tipo}"
 
                 annotation = ax.annotate(annotation_text, xy=(x, proc), 
                                         xytext=(10, 10), textcoords='offset points',
@@ -371,7 +384,7 @@ def gui(): # Função principal para a interface gráfica
         canvas_plot.mpl_connect('button_release_event', on_release)
 
 
-    # Verificar se o arquivo process_times.txt existe antes de carregar os dados
+    # verificar se process_times.txt existe
 
     def load_data():
         global data
@@ -391,18 +404,16 @@ def gui(): # Função principal para a interface gráfica
     cpu_menu = OptionMenu(root, cpu_var, *cpus_disponiveis)
     cpu_menu.configure(bg=entry_bg_dark)
     cpu_menu.grid(row=0, column=1, sticky='w')  
-    # Variáveis globais para controle do arrasto e do hover
+    
     is_dragging = False
     x_press = None
     y_press = None
     annotation = None
     monitoring_successful = False  # Flag para verificar se o monitoramento foi realizado
 
-    # Função para alternar entre modos
 
-    # Executar o loop principal do Tkinter
+    
     root.mainloop()
 
 if __name__ == "__main__":
     gui()
-
