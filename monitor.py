@@ -15,7 +15,7 @@ def gui():
     root = Tk()
     root.title("Analisador de Processos por CPU")
 
-
+    
     global dark_mode, annotation, is_dragging, x_press, y_press
 
     dark_mode = True
@@ -101,29 +101,27 @@ def gui():
     glossary_label.grid(row=4, column=0, columnspan=3, sticky='n')
 
     # Configurações de layout
-    root.grid_rowconfigure(2, weight=1)
     root.grid_columnconfigure(1, weight=1)
+    root.grid_rowconfigure(2, weight=2)  
+    root.grid_rowconfigure(3, weight=1)  
     # botão para alternar entre os modos claro e escuro
     toggle_button = Button(root, text="Desativar Modo Noturno", command=toggle_mode, bg=button_bg_dark, fg=button_fg_dark)
     toggle_button.grid(row=0, column=2, sticky='ne')  # Posicionando no canto superior direito
 
     # frame do gráfico
-    frame = Frame(root, bg=bg_color_dark)
+    frame = Frame(root, bg=bg_color_dark, height=400, width=600)
     frame.grid(row=2, column=0, columnspan=3, sticky='nsew')
+    frame.grid_rowconfigure(0, weight=2)
+    frame.grid_columnconfigure(0, weight=2)
 
     # frame do scroll e do texto
-    output_frame = Frame(root, bg=bg_color_dark)
+    output_frame = Frame(root, bg=bg_color_dark, height=5, width=5)
     output_frame.grid(row=3, column=0, columnspan=3, sticky='nsew')
-
-    # scrollbar
-    scrollbar = Scrollbar(output_frame)
-    scrollbar.pack(side='right', fill='y')
-    
-    
+    output_frame.grid_rowconfigure(0, weight=1)
+    output_frame.grid_columnconfigure(0, weight=1)
     # saida de texto
-    output_text = Text(output_frame, wrap='word', bg=entry_bg_dark, fg=label_color_dark, yscrollcommand=scrollbar.set)
+    output_text = Text(output_frame, wrap='word', bg=entry_bg_dark, fg=label_color_dark, height=5, width=5)
     output_text.pack(fill='both', expand=True)
-    scrollbar.config(command=output_text.yview)
 
     def log_message(message):
         output_text.insert(END, message + '\n')
@@ -140,7 +138,7 @@ def gui():
             )
 
             # tempo do monitoramento
-            time.sleep(3)
+            time.sleep(2)
 
             os.kill(process.pid, signal.SIGINT)
             process.wait()
@@ -270,7 +268,7 @@ def gui():
         ax.set_ylabel('Processos')
         ax.set_title(f'Processos na CPU {cpu}: Acordado, Execução e Término')
         ax.grid(True)
-
+        
         
         def zoom(event):
             base_scale = 1.2
@@ -372,10 +370,9 @@ def gui():
 
         for widget in frame.winfo_children():
             widget.destroy()
-
         canvas_plot = FigureCanvasTkAgg(fig, master=frame)
         canvas_plot.draw()
-        canvas_plot.get_tk_widget().pack()
+        canvas_plot.get_tk_widget().pack(fill='both', expand=True)
 
         canvas_plot.mpl_connect('motion_notify_event', on_hover)
         canvas_plot.mpl_connect('scroll_event', zoom)
